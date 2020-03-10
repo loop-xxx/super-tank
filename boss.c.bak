@@ -1,0 +1,628 @@
+#include <stdlib.h>
+#include "boss.h"
+
+#define BOSS_UP 0
+#define BOSS_DOWN 1
+#define BOSS_LEFT 2
+#define BOSS_RIGHT 3
+
+
+typedef struct _boss{
+    struct{
+        short x , y ;
+    }m_position ;
+    unsigned int m_direction ;
+    clock_t m_speed ;
+    unsigned int m_blood ;
+    unsigned char m_sign ;
+    bool m_body[0x7][0xc] ;
+}boss ;
+
+static boss b1 ;
+
+//将boss放置在物理地图
+void _put_boss(boss *boss_pointer)
+{
+    switch (boss_pointer->m_direction)
+    {
+    case BOSS_UP:
+        for(short row = (short)((sizeof b1.m_body)/ sizeof( b1.m_body[0]) - 1); row >=0; row--)
+        {
+            for(short col = 0; col < (short)((sizeof b1.m_body[0])/ sizeof( b1.m_body[0][0])); col++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    PUT_OBJECT(boss_pointer->m_position.x + col, boss_pointer->m_position.y+((short)((sizeof b1.m_body)/ sizeof( b1.m_body[0]) - 1) - row), boss_pointer->m_sign) ;
+                }
+            }
+        }
+        break;
+    case BOSS_DOWN:
+        for(short row = 0; row < (short)((sizeof boss_pointer->m_body)/ sizeof( boss_pointer->m_body[0])); row++)
+        {
+            for(short col = 0; col < (short)((sizeof boss_pointer->m_body[0])/ sizeof( boss_pointer->m_body[0][0])); col++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    PUT_OBJECT(boss_pointer->m_position.x + col, boss_pointer->m_position.y+row, boss_pointer->m_sign) ;
+                }
+            }
+        }
+        break;
+    case BOSS_LEFT:
+        for(short col = 0 ; col < (short)((sizeof boss_pointer->m_body[0])/sizeof( boss_pointer->m_body[0][0])) ; col++)
+        {
+            for(short row = (short)((sizeof boss_pointer->m_body)/ sizeof( boss_pointer->m_body[0]) -1) ; row >=0 ; row--)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    PUT_OBJECT(boss_pointer->m_position.x + ((short)((sizeof b1.m_body)/ sizeof( b1.m_body[0]) -1)- row), boss_pointer->m_position.y+col, boss_pointer->m_sign) ;
+                }
+            }
+        }
+
+        break ;
+    case BOSS_RIGHT:
+        for(short col = 0 ; col < (short)((sizeof boss_pointer->m_body[0])/sizeof( boss_pointer->m_body[0][0])) ; col++)
+        {
+            for(short row = 0; row < (short)((sizeof b1.m_body)/ sizeof( b1.m_body[0])); row++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    PUT_OBJECT(boss_pointer->m_position.x + row, boss_pointer->m_position.y+col, boss_pointer->m_sign) ;
+                }
+            }
+        }
+        break ;
+    }
+}
+//将boss从物理地图上拿起
+void _take_boss(boss *boss_pointer)
+{
+    switch (boss_pointer->m_direction)
+    {
+    case BOSS_UP:
+        for(short row = (short)((sizeof b1.m_body)/ sizeof( b1.m_body[0]) - 1); row >=0; row--)
+        {
+            for(short col = 0; col < (short)((sizeof b1.m_body[0])/ sizeof( b1.m_body[0][0])); col++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    TAKE_OBJECT(boss_pointer->m_position.x + col, boss_pointer->m_position.y+((short)((sizeof b1.m_body)/ sizeof( b1.m_body[0]) - 1) - row)) ;
+                }
+            }
+        }
+        break;
+    case BOSS_DOWN:
+        for(short row = 0; row < (short)((sizeof b1.m_body)/ sizeof( b1.m_body[0])); row++)
+        {
+            for(short col = 0; col < (short)((sizeof b1.m_body[0])/ sizeof( b1.m_body[0][0])); col++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    TAKE_OBJECT(boss_pointer->m_position.x + col, boss_pointer->m_position.y+row) ;
+                }
+            }
+        }
+        break;
+    case BOSS_LEFT:
+        for(short col = 0; col < (short)((sizeof b1.m_body[0])/ sizeof( b1.m_body[0][0])); col++)
+        {
+            for(short row = (short)((sizeof b1.m_body)/ sizeof( b1.m_body[0]) -1) ; row >=0 ; row--)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    TAKE_OBJECT(boss_pointer->m_position.x + ((short)((sizeof b1.m_body)/ sizeof( b1.m_body[0]) - 1) - row), boss_pointer->m_position.y+col) ;
+                }
+            }
+        }
+
+        break ;
+    case BOSS_RIGHT:
+        for(short col = 0; col < (short)((sizeof b1.m_body[0])/ sizeof( b1.m_body[0][0])); col++)
+        {
+            for(short row = 0; row < (short)((sizeof b1.m_body)/ sizeof( b1.m_body[0])); row++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    TAKE_OBJECT(boss_pointer->m_position.x + row, boss_pointer->m_position.y+col) ;
+                }
+            }
+        }
+        break ;
+    }
+}
+
+//将boss画在控制台上
+void _boss_draw(boss *boss_pointer)
+{
+    switch (boss_pointer->m_direction)
+    {
+    case BOSS_UP:
+        for(short row = (short)((sizeof boss_pointer->m_body)/ sizeof( boss_pointer->m_body[0]) - 1); row >=0; row--)
+        {
+            for(short col = 0; col < (short)((sizeof boss_pointer->m_body[0])/ sizeof( boss_pointer->m_body[0][0])); col++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    write_char(boss_pointer->m_position.x + col, boss_pointer->m_position.y+((short)((sizeof b1.m_body)/ sizeof( b1.m_body[0]) - 1) - row), tank_pic[2], F_H_BLUE) ;
+                }
+            }
+        }
+        break;
+    case BOSS_DOWN:
+        for(short row = 0; row < (short)((sizeof boss_pointer->m_body)/ sizeof( boss_pointer->m_body[0])); row++)
+        {
+            for(short col = 0; col < (short)((sizeof boss_pointer->m_body[0])/ sizeof( boss_pointer->m_body[0][0])); col++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    write_char(boss_pointer->m_position.x + col, boss_pointer->m_position.y+row, tank_pic[2], F_H_BLUE) ;
+                }
+            }
+        }
+        break;
+    case BOSS_LEFT:
+        for(short col = 0; col < (short)((sizeof b1.m_body[0])/ sizeof( b1.m_body[0][0])); col++)
+        {
+            for(short row = (short)((sizeof b1.m_body)/ sizeof( b1.m_body[0]) -1) ; row >=0 ; row--)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    write_char(boss_pointer->m_position.x + ((short)((sizeof b1.m_body)/ sizeof( b1.m_body[0]) - 1) - row), boss_pointer->m_position.y+col, tank_pic[2], F_H_BLUE) ;
+                }
+            }
+        }
+        break;
+    case BOSS_RIGHT:
+        for(short col = 0; col < (short)((sizeof b1.m_body[0])/ sizeof( b1.m_body[0][0])); col++)
+        {
+            for(short row = 0; row < (short)((sizeof b1.m_body)/ sizeof( b1.m_body[0])); row++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    write_char(boss_pointer->m_position.x + row, boss_pointer->m_position.y+col, tank_pic[2], F_H_BLUE) ;
+                }
+            }
+        }
+        break;
+    }
+}
+//将boss从控制台上清除
+void _boss_clear(boss *boss_pointer)
+{
+    switch (boss_pointer->m_direction)
+    {
+    case BOSS_UP:
+        for(short row = (short)((sizeof b1.m_body)/ sizeof( b1.m_body[0]) - 1); row >=0; row--)
+        {
+            for(short col = 0; col < (short)((sizeof b1.m_body[0])/ sizeof( b1.m_body[0][0])); col++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    CLEAR_OBJECT(boss_pointer->m_position.x + col, boss_pointer->m_position.y+((short)((sizeof b1.m_body)/ sizeof( b1.m_body[0]) - 1) -row)) ;
+                }
+            }
+        }
+        break;
+    case BOSS_DOWN:
+        for(short row = 0; row < (short)((sizeof b1.m_body)/ sizeof( b1.m_body[0])); row++)
+        {
+            for(short col = 0; col < (short)((sizeof b1.m_body[0])/ sizeof( b1.m_body[0][0])); col++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    CLEAR_OBJECT(boss_pointer->m_position.x + col, boss_pointer->m_position.y+row) ;
+                }
+            }
+        }
+        break;
+    case BOSS_LEFT:
+        for(short col = 0; col < (short)((sizeof b1.m_body[0])/ sizeof( b1.m_body[0][0])); col++)
+        {
+            for(short row = (short)((sizeof b1.m_body)/ sizeof( b1.m_body[0]) -1) ; row >=0 ; row--)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    CLEAR_OBJECT(boss_pointer->m_position.x + ((short)((sizeof b1.m_body)/ sizeof( b1.m_body[0]) -1) - row), boss_pointer->m_position.y+col) ;
+                }
+            }
+        }
+
+        break ;
+    case BOSS_RIGHT:
+        for(short col = 0; col < (short)((sizeof b1.m_body[0])/ sizeof( b1.m_body[0][0])); col++)
+        {
+            for(short row = 0; row < (short)((sizeof b1.m_body)/ sizeof( b1.m_body[0])); row++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    CLEAR_OBJECT(boss_pointer->m_position.x + row, boss_pointer->m_position.y+col) ;
+                }
+            }
+        }
+        break ;
+    }
+}
+
+/**
+ * @brief _boss_iscrash_object 判断是否有其他对象
+ * @param boss_pointer
+ * @return
+ */
+bool _boss_iscrash_object(boss *boss_pointer)
+{
+    bool result = false;
+
+    switch (boss_pointer->m_direction)
+    {
+    case BOSS_UP:
+        for(short row = (short)((sizeof boss_pointer->m_body)/ sizeof( boss_pointer->m_body[0]) - 1); row >=0; row--)
+        {
+            for(short col = 0; col < (short)((sizeof boss_pointer->m_body[0])/ sizeof( boss_pointer->m_body[0][0])); col++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    if(IS_CRASH_OBJECT(boss_pointer->m_position.x + col, boss_pointer->m_position.y+row, boss_pointer->m_sign))
+                    {
+                        result = true ;
+                        break ;
+                    }
+                }
+            }
+        }
+        break;
+    case BOSS_DOWN:
+        for(short row = 0; row < (short)((sizeof boss_pointer->m_body)/ sizeof( boss_pointer->m_body[0])); row++)
+        {
+            for(short col = 0; col < (short)((sizeof boss_pointer->m_body[0])/ sizeof( boss_pointer->m_body[0][0])); col++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    if(IS_CRASH_OBJECT(boss_pointer->m_position.x + col, boss_pointer->m_position.y+row, boss_pointer->m_sign))
+                    {
+                        result = true ;
+                        break ;
+                    }
+                }
+            }
+        }
+        break;
+    case BOSS_LEFT:
+        for(short col = 0; col < (short)((sizeof b1.m_body[0])/ sizeof( b1.m_body[0][0])); col++)
+        {
+            for(short row = (short)((sizeof b1.m_body)/ sizeof( b1.m_body[0]) -1) ; row >=0 ; row--)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    if(IS_CRASH_OBJECT(boss_pointer->m_position.x + row, boss_pointer->m_position.y+col, boss_pointer->m_sign))
+                    {
+                        result = true ;
+                        break ;
+                    }
+                }
+            }
+        }
+        break;
+    case BOSS_RIGHT:
+        for(short col = (short)((sizeof boss_pointer->m_body[0])/ sizeof( boss_pointer->m_body[0][0]) -1); col >= 0 ; col--)
+        {
+            for(short row = 0; row < (short)((sizeof b1.m_body)/ sizeof( b1.m_body[0])); row++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    if(IS_CRASH_OBJECT(boss_pointer->m_position.x + row, boss_pointer->m_position.y+col,  boss_pointer->m_sign))
+                    {
+                        result = true ;
+                        break ;
+                    }
+                }
+            }
+        }
+        break;
+    }
+    return  result ;
+}
+/**
+ * @brief _boss_iscrash_sence 判断是否有障碍物
+ * @param boss_pointer
+ * @return
+ */
+bool _boss_iscrash_sence(boss *boss_pointer)
+{
+    bool result = false;
+
+    switch (boss_pointer->m_direction)
+    {
+    case BOSS_UP:
+        for(short row = (short)((sizeof boss_pointer->m_body)/ sizeof( boss_pointer->m_body[0]) - 1); row >=0; row--)
+        {
+            for(short col = 0; col < (short)((sizeof boss_pointer->m_body[0])/ sizeof( boss_pointer->m_body[0][0])); col++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    if(IS_CRASH_SENCE(boss_pointer->m_position.x + col, boss_pointer->m_position.y+row))
+                    {
+                        result = true ;
+                        break ;
+                    }
+                }
+            }
+        }
+        break;
+    case BOSS_DOWN:
+        for(short row = 0; row < (short)((sizeof boss_pointer->m_body)/ sizeof( boss_pointer->m_body[0])); row++)
+        {
+            for(short col = 0; col < (short)((sizeof boss_pointer->m_body[0])/ sizeof( boss_pointer->m_body[0][0])); col++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    if(IS_CRASH_SENCE(boss_pointer->m_position.x + col, boss_pointer->m_position.y+row))
+                    {
+                        result = true ;
+                        break ;
+                    }
+                }
+            }
+        }
+        break;
+    case BOSS_LEFT:
+        for(short col = 0; col < (short)((sizeof b1.m_body[0])/ sizeof( b1.m_body[0][0])); col++)
+        {
+            for(short row = (short)((sizeof b1.m_body)/ sizeof( b1.m_body[0]) -1) ; row >=0 ; row--)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    if(IS_CRASH_SENCE(boss_pointer->m_position.x + row, boss_pointer->m_position.y+col))
+                    {
+                        result = true ;
+                        break ;
+                    }
+                }
+            }
+        }
+        break;
+    case BOSS_RIGHT:
+        for(short col = (short)((sizeof boss_pointer->m_body[0])/ sizeof( boss_pointer->m_body[0][0]) -1); col >= 0 ; col--)
+        {
+            for(short row = 0; row < (short)((sizeof b1.m_body)/ sizeof( b1.m_body[0])); row++)
+            {
+                if(boss_pointer->m_body[row][col])
+                {
+                    if(IS_CRASH_SENCE(boss_pointer->m_position.x + row, boss_pointer->m_position.y+col))
+                    {
+                        result = true ;
+                        break ;
+                    }
+                }
+            }
+        }
+        break;
+    }
+    return  result ;
+}
+
+/**
+ * @brief _boss_move_check 判断boss是否可以移动
+ * @param boss_pointer
+ * @return
+ */
+bool _boss_move_check(boss *boss_pointer, unsigned int direction)
+{
+    bool result ;
+
+    result = false ;
+    switch (direction)
+    {
+    case BOSS_UP:
+        boss_pointer->m_position.y -= 1;
+        if(!_boss_iscrash_object(boss_pointer) && !_boss_iscrash_sence(boss_pointer))
+        {
+            result = true ;
+        }
+        boss_pointer->m_position.y += 1;
+        break ;
+    case BOSS_DOWN:
+        boss_pointer->m_position.y += 1;
+        if(!_boss_iscrash_object(boss_pointer) && !_boss_iscrash_sence(boss_pointer))
+        {
+            result = true ;
+        }
+        boss_pointer->m_position.y -= 1;
+        break ;
+    case BOSS_LEFT:
+        boss_pointer->m_position.x -= 1;
+        if(!_boss_iscrash_object(boss_pointer) && !_boss_iscrash_sence(boss_pointer))
+        {
+            result = true ;
+        }
+        boss_pointer->m_position.x += 1;
+        break ;
+    case BOSS_RIGHT:
+        boss_pointer->m_position.x += 1;
+        if(!_boss_iscrash_object(boss_pointer) && !_boss_iscrash_sence(boss_pointer))
+        {
+            result = true ;
+        }
+        boss_pointer->m_position.x -= 1;
+        break ;
+    }
+    return  result ;
+}
+/**
+ * @brief _boss_turn_check 判断boss是否可以转头
+ * @param boss_pointer
+ * @param direction
+ * @return
+ */
+bool _boss_turn_check(boss *boss_pointer, unsigned int direction)
+{
+    bool result;
+
+    result = false ;
+    //转头
+    direction =  direction ^  boss_pointer->m_direction  ;
+    boss_pointer->m_direction = direction ^ boss_pointer->m_direction ;
+    direction = direction ^ boss_pointer->m_direction ;
+    if(!_boss_iscrash_object(boss_pointer) && !_boss_iscrash_sence(boss_pointer))
+    {
+        result = true ;
+    }
+    //回头
+    direction =  direction ^  boss_pointer->m_direction  ;
+    boss_pointer->m_direction = direction ^ boss_pointer->m_direction ;
+    direction = direction ^ boss_pointer->m_direction ;
+
+    return result ;
+}
+
+void _boss_turn(boss *boss_pointer, unsigned int direction)
+{
+    if(_boss_turn_check(boss_pointer, direction))
+    {
+        _boss_clear(boss_pointer) ;
+        _take_boss(boss_pointer) ;
+        boss_pointer->m_direction = direction ;
+        _put_boss(boss_pointer) ;
+        _boss_draw(boss_pointer) ;
+    }
+}
+void _boss_move(boss *boss_pointer, unsigned int direction)
+{
+    if(_boss_move_check(boss_pointer, direction))
+    {
+        _boss_clear(boss_pointer) ;
+        _take_boss(boss_pointer) ;
+        switch(direction)
+        {
+        case BOSS_UP:
+            boss_pointer->m_position.y -= 1;
+            break;
+        case BOSS_DOWN:
+            boss_pointer->m_position.y += 1;
+            break ;
+        case BOSS_LEFT:
+            boss_pointer->m_position.x -= 1;
+            break ;
+        case BOSS_RIGHT:
+            boss_pointer->m_position.x += 1;
+            break ;
+        }
+        _put_boss(boss_pointer) ;
+        _boss_draw(boss_pointer) ;
+    }
+}
+
+bool boss_isok()
+{
+    bool result ;
+    clock_t current_clock ;
+    static clock_t first_clock = 0 ;
+
+    result = false ;
+    current_clock = clock() ;
+    if(current_clock - first_clock >= b1.m_speed)
+    {
+        first_clock = current_clock ;
+        result = true ;
+    }
+
+    return result ;
+}
+
+void boss_move(short x, short y)
+{
+    short row = b1.m_position.y - y  ;
+    short col = b1.m_position.x - x ;
+    if((col>=0 ? col:0-col) > (row >= 0?row : 0-row) )
+    {
+        if(col < 0)
+        {
+            if(b1.m_direction ==  BOSS_RIGHT)
+            {
+                if(row > 0)
+                {
+                    _boss_move(&b1, BOSS_UP) ;
+                }else {
+                    _boss_move(&b1, BOSS_DOWN) ;
+                }
+            }else {
+                _boss_turn(&b1, BOSS_RIGHT) ;
+            }
+
+        }
+        else
+        {
+            if(b1.m_direction ==  BOSS_LEFT)
+            {
+                if(row < 0)
+                {
+                    _boss_move(&b1, BOSS_DOWN) ;
+                }else {
+                    _boss_move(&b1, BOSS_UP) ;
+                }
+            }else{
+                _boss_turn(&b1, BOSS_LEFT) ;
+            }
+
+        }
+    }
+    else
+    {
+        if(row < 0)
+        {
+            if(b1.m_direction == BOSS_DOWN)
+            {
+                if(col < 0)
+                {
+                    _boss_move(&b1, BOSS_RIGHT) ;
+                }else {
+                    _boss_move(&b1, BOSS_LEFT) ;
+                }
+            }else {
+                _boss_turn(&b1, BOSS_DOWN) ;
+            }
+        }else {
+            if(b1.m_direction == BOSS_UP)
+            {
+                if(col > 0)
+                {
+                    _boss_move(&b1, BOSS_RIGHT) ;
+                }else {
+                    _boss_move(&b1, BOSS_LEFT) ;
+                }
+            }else {
+                _boss_turn(&b1, BOSS_UP) ;
+            }
+        }
+    }
+}
+
+void boss_init(unsigned int blood, clock_t speed)
+{
+    srand((unsigned int)time(NULL)) ;
+    b1.m_direction = BOSS_DOWN ;
+    b1.m_position.x = ((short)(MAP_WIDTH - sizeof(b1.m_body[0])/sizeof(b1.m_body[0][0])))/2 ;
+    b1.m_position.y = 0x1 ;
+    for(short row = 0; row < (short)((sizeof b1.m_body)/ sizeof( b1.m_body[0])) ; row++)
+    {
+        for(short col = 0; col < (short)((sizeof b1.m_body[0])/ sizeof( b1.m_body[0][0]))/2 ; col++)
+        {
+            if(rand()%2)
+            {
+                b1.m_body[row][col] = true ;
+                b1.m_body[row][(short)((sizeof b1.m_body[0])/ sizeof( b1.m_body[0][0]) - 1) - col] = true ;
+            }
+        }
+    }
+    b1.m_blood = blood ;
+    b1.m_speed = speed ;
+
+    b1.m_sign = (unsigned char)'\xff' ;
+}
+
+void boss_draw()
+{
+    _put_boss(&b1) ;
+    _boss_draw(&b1) ;
+}

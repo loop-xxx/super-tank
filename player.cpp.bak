@@ -1,0 +1,88 @@
+#include "map.h"
+
+#define UP 0
+#define DOWN 1
+#define LEFT 2
+#define RIGHT 3
+
+#define PUT_PLAYER_UP(x, y, sign)\
+
+
+
+
+#define PUT_PLAYER_RIGHT(x, y, sign)\
+
+
+typedef struct _player{
+    struct{
+        short x , y ;
+    }m_position ;
+    unsigned int m_direction ;
+
+    unsigned int m_blood ;
+    unsigned int m_speed ;
+    unsigned int m_score ;
+
+    unsigned char m_sign ;
+}player ;
+
+static player p1 ;
+
+
+static inline void _put_palyer(player *player_pointer)
+{
+    switch (player_pointer->m_direction)
+    {
+    case UP:
+        PUT_OBJECT(player_pointer->m_position.x, player_pointer->m_position.y, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x, player_pointer->m_position.y-1, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x-1, player_pointer->m_position.y, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x+1, player_pointer->m_position.y, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x-1, player_pointer->m_position.y+1, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x-1, player_pointer->m_position.y+1, player_pointer->m_sing) ;
+        break;
+    case DOWN:
+        PUT_OBJECT(player_pointer->m_position.x, player_pointer->m_position.y, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x, player_pointer->m_position.y+1, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x-1, player_pointer->m_position.y, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x+1, player_pointer->m_position.y, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x-1, player_pointer->m_position.y-1, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x-1, player_pointer->m_position.y-1, player_pointer->m_sing) ;
+        break ;
+    case LEFT:
+        PUT_OBJECT(player_pointer->m_position.x, player_pointer->m_position.y, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x-1, player_pointer->m_position.y, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x, player_pointer->m_position.y-1, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x, player_pointer->m_position.y+1, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x+1, player_pointer->m_position.y-1, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x+1, player_pointer->m_position.y+1, player_pointer->m_sing) ;
+        break ;
+    case RIGHT:
+        PUT_OBJECT(player_pointer->m_position.x, player_pointer->m_position.y, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x+1, player_pointer->m_position.y, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x, player_pointer->m_position.y-1, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x, player_pointer->m_position.y+1, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x-1, player_pointer->m_position.y-1, player_pointer->m_sing) ;
+        PUT_OBJECT(player_pointer->m_position.x-1, player_pointer->m_position.y+1, player_pointer->m_sing) ;
+        break ;
+    }
+
+}
+void player_init(unsigned int blood, unsigned int speed)
+{
+    p1.m_direction = UP ;
+    p1.m_position.x = MAP_WIDTH/2 ;
+    p1.m_position.y = MAP_HEIGHT - 3 ;
+
+
+    p1.m_blood = blood ;
+    p1.m_speed = speed ;
+
+    p1.m_sign = 1 ;
+    p1.m_score = 0 ;
+}
+
+void player_draw()
+{
+    write_char(p)
+}
